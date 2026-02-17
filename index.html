@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ShortsBot">
+<meta name="theme-color" content="#0a0a0f">
+<title>ShortsBot</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0f;--surface:#111118;--card:#18181f;--border:#22222e;
+  --red:#ff3d3d;--orange:#ff6b35;--green:#00e676;--yellow:#ffc107;--blue:#2979ff;
+  --text:#f0f0f8;--muted:#5a5a72;
+  --safe-top:env(safe-area-inset-top,44px);
+  --safe-bottom:env(safe-area-inset-bottom,34px);
+}
+html{height:100%;overflow:hidden}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.status-bar{height:var(--safe-top);background:var(--bg);flex-shrink:0}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 10px;background:var(--bg);flex-shrink:0;border-bottom:1px solid var(--border)}
+.header-logo{display:flex;align-items:center;gap:9px}
+.logo-pill{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--red),var(--orange));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(255,61,61,0.4)}
+.logo-name{font-size:19px;font-weight:800;letter-spacing:-0.5px}
+.logo-name span{color:var(--red)}
+.conn-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;border:none;transition:all .2s;letter-spacing:.2px}
+.conn-btn.off{background:rgba(255,61,61,0.12);color:var(--red);border:1px solid rgba(255,61,61,0.25)}
+.conn-btn.on{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2)}
+.cdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.cdot.pulse{animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 0 16px}
+.page{display:none;padding:0 16px}
+.page.active{display:block}
+.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 6px;cursor:pointer;transition:all .15s;user-select:none;-webkit-user-select:none}
+.nav-icon{font-size:22px;line-height:1;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.nav-label{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:.3px;transition:color .15s;text-transform:uppercase}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-btn.active .nav-label{color:var(--red)}
+.section-head{padding:20px 0 12px;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.section-title em{color:var(--red);font-style:normal}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:-20px;right:-20px;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,rgba(255,61,61,0.08),transparent 70%)}
+.stat-emoji{font-size:20px;margin-bottom:8px}
+.stat-num{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.stat-lbl{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.stat-sub{font-size:10px;margin-top:5px;color:var(--green);font-family:'DM Mono',monospace}
+.queue-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;transition:border-color .2s;cursor:pointer}
+.queue-card:active{background:var(--surface)}
+.qthumb{width:44px;height:78px;border-radius:8px;background:linear-gradient(160deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.q-info{flex:1;min-width:0}
+.q-title{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.q-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:7px}
+.q-actions{display:flex;gap:6px;margin-top:6px}
+.q-del{font-size:11px;color:var(--muted);padding:3px 8px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:transparent;font-family:'Syne',sans-serif}
+.q-del:active{background:rgba(255,61,61,0.1);border-color:var(--red);color:var(--red)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.3px}
+.badge-live{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)}
+.badge-pending{background:rgba(255,193,7,0.12);color:var(--yellow);border:1px solid rgba(255,193,7,0.25)}
+.badge-draft{background:rgba(90,90,114,0.15);color:var(--muted);border:1px solid rgba(90,90,114,0.25)}
+.badge-error{background:rgba(255,61,61,0.12);color:var(--red);border:1px solid rgba(255,61,61,0.25)}
+.badge-scheduled{background:rgba(41,121,255,0.12);color:var(--blue);border:1px solid rgba(41,121,255,0.25)}
+.gen-form{display:flex;flex-direction:column;gap:18px;padding-bottom:20px}
+.form-group{display:flex;flex-direction:column;gap:8px}
+.form-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;color:var(--text);font-size:15px;font-family:'Syne',sans-serif;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--red)}
+.form-textarea{height:90px;resize:none;font-size:14px;line-height:1.5}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px}
+.pill{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;-webkit-user-select:none}
+.pill.active{border-color:var(--red);background:rgba(255,61,61,0.12);color:var(--text)}
+.pill:active{transform:scale(.95)}
+.gen-btn{width:100%;padding:17px;border-radius:16px;background:linear-gradient(135deg,var(--red),var(--orange));color:white;font-size:16px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;letter-spacing:.3px;box-shadow:0 6px 28px rgba(255,61,61,0.35);transition:all .15s;position:relative;overflow:hidden}
+.gen-btn:active{transform:scale(.97)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.setting-row:last-child{border-bottom:none}
+.setting-info{flex:1;padding-right:16px}
+.setting-name{font-size:14px;font-weight:700}
+.setting-desc{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.ios-toggle{appearance:none;-webkit-appearance:none;width:51px;height:31px;border-radius:16px;background:#3a3a4a;position:relative;cursor:pointer;transition:background .25s;border:none;outline:none;flex-shrink:0}
+.ios-toggle:checked{background:var(--red)}
+.ios-toggle::after{content:'';position:absolute;width:27px;height:27px;background:white;border-radius:50%;top:2px;left:2px;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:left .25s cubic-bezier(.34,1.56,.64,1)}
+.ios-toggle:checked::after{left:22px}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-overlay.open{opacity:1;pointer-events:all}
+.sheet{background:var(--surface);width:100%;border-radius:24px 24px 0 0;padding:0 20px calc(var(--safe-bottom) + 20px);transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);max-height:92vh;overflow-y:auto}
+.sheet-overlay.open .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 20px}
+.sheet-title{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.sheet-sub{font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.perm-list{display:flex;flex-direction:column;gap:2px;margin-bottom:20px}
+.perm-item{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:var(--card);border-radius:10px;font-size:13px;line-height:1.5}
+.perm-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.yt-btn{width:100%;padding:16px;border-radius:14px;background:white;color:#111;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:all .15s;text-decoration:none}
+.yt-btn:active{transform:scale(.98)}
+.yt-btn:disabled{opacity:.5;cursor:not-allowed}
+.auth-note{text-align:center;font-size:11px;color:var(--muted);line-height:1.6}
+.prog-list{display:flex;flex-direction:column;gap:4px;margin:16px 0}
+.prog-item{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--card);border-radius:12px;opacity:.35;transition:all .3s}
+.prog-item.active{opacity:1}
+.prog-item.done{opacity:.6}
+.prog-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:700;transition:all .3s}
+.prog-item.active .prog-dot{border-color:var(--red);background:rgba(255,61,61,0.15);color:var(--red);animation:ring 1.2s infinite}
+.prog-item.done .prog-dot{border-color:var(--green);background:rgba(0,230,118,0.12);color:var(--green)}
+.prog-text{font-size:13.5px;font-weight:600}
+@keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(255,61,61,.5)}50%{box-shadow:0 0 0 5px rgba(255,61,61,0)}}
+.script-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12.5px;line-height:1.7;font-family:'DM Mono',monospace;color:var(--text);max-height:160px;overflow-y:auto;display:none;margin-bottom:14px;white-space:pre-wrap}
+.script-box.show{display:block}
+.done-state{text-align:center;padding:10px 0 4px;display:none}
+.done-state.show{display:block}
+.done-emoji{font-size:48px;margin-bottom:8px}
+.done-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.done-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.setup-card{background:var(--card);border:1.5px solid rgba(255,193,7,0.3);border-radius:16px;padding:18px;margin:12px 0 16px}
+.setup-card h3{font-size:15px;font-weight:800;margin-bottom:6px;color:var(--yellow)}
+.setup-card p{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.input-row{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.input-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.setup-input{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:13px;font-family:'DM Mono',monospace;outline:none;-webkit-appearance:none;transition:border-color .2s}
+.setup-input:focus{border-color:var(--yellow)}
+.save-btn{width:100%;padding:13px;border-radius:12px;background:var(--yellow);color:#111;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;transition:all .15s}
+.save-btn:active{transform:scale(.97)}
+.toast-zone{position:fixed;top:calc(var(--safe-top) + 60px);left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{background:rgba(24,24,31,.96);border:1px solid var(--border);border-radius:20px;padding:10px 18px;font-size:13px;font-weight:600;white-space:nowrap;backdrop-filter:blur(16px);box-shadow:0 8px 32px rgba(0,0,0,.4);transform:scale(.85) translateY(-8px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:scale(1) translateY(0);opacity:1}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .ei{font-size:44px;margin-bottom:10px}
+.empty-state .et{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty-state .es{font-size:13px;line-height:1.5}
+.install-banner{margin:12px 0 4px;background:linear-gradient(135deg,rgba(255,61,61,0.12),rgba(255,107,53,0.08));border:1px solid rgba(255,61,61,0.25);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.install-banner.hidden{display:none}
+.install-text{flex:1}
+.install-title{font-size:13px;font-weight:700}
+.install-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.mini-chart{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+.chart-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:52px}
+.bar{flex:1;background:rgba(255,61,61,0.18);border-radius:3px 3px 0 0;min-height:4px}
+.bar.today{background:rgba(255,61,61,0.55)}
+.loading{text-align:center;padding:30px;color:var(--muted);font-size:14px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.page.active>*{animation:fadeUp .35s ease both}
+.page.active>*:nth-child(2){animation-delay:.05s}
+.page.active>*:nth-child(3){animation-delay:.1s}
+.page.active>*:nth-child(4){animation-delay:.15s}
+.divider{border:none;border-top:1px solid var(--border);margin:4px 0}
+</style>
+</head>
+<body>
+
+<!-- CONNECT SHEET -->
+<div class="sheet-overlay" id="connectSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Connect YouTube</div>
+    <div class="sheet-sub">ShortsBot will be able to create and post Shorts to your channel automatically.</div>
+    <div class="perm-list">
+      <div class="perm-item"><span class="perm-icon">✓</span> Upload Shorts to your channel</div>
+      <div class="perm-item"><span class="perm-icon">✓</span> Set titles, descriptions &amp; hashtags</div>
+      <div class="perm-item"><span class="perm-icon">✓</span> Schedule publishing times</div>
+      <div class="perm-item"><span class="perm-icon">✓</span> Read channel analytics</div>
+    </div>
+    <a class="yt-btn" id="signInBtn" href="/auth/connect">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" fill="#FF0000"/><polygon points="9.75,15.02 15.5,12 9.75,8.98" fill="white"/></svg>
+      Sign in with Google / YouTube
+    </a>
+    <div class="auth-note">You'll be taken to Google's real sign-in page.<br>We never see or store your password.</div>
+  </div>
+</div>
+
+<!-- GENERATION SHEET -->
+<div class="sheet-overlay" id="genSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🎬 Making Your Short</div>
+    <div class="sheet-sub">AI is writing and scheduling your video now...</div>
+    <div class="prog-list" id="progList">
+      <div class="prog-item" id="ps1"><div class="prog-dot">1</div><span class="prog-text">Writing your script...</span></div>
+      <div class="prog-item" id="ps2"><div class="prog-dot">2</div><span class="prog-text">Crafting title &amp; hashtags</span></div>
+      <div class="prog-item" id="ps3"><div class="prog-dot">3</div><span class="prog-text">Setting up video metadata</span></div>
+      <div class="prog-item" id="ps4"><div class="prog-dot">4</div><span class="prog-text">Saving to your queue</span></div>
+    </div>
+    <div class="script-box" id="scriptBox"></div>
+    <div class="done-state" id="doneState">
+      <div class="done-emoji">🎉</div>
+      <div class="done-title">Short is Ready!</div>
+      <div class="done-sub" id="doneSub">Added to your queue.</div>
+      <button class="gen-btn" onclick="closeSheet('genSheet');resetGen()">Awesome!</button>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL SHEET -->
+<div class="sheet-overlay" id="installSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📲 Add to Home Screen</div>
+    <div class="sheet-sub">Install ShortsBot so it opens like a real app — no browser bars, works offline.</div>
+    <div class="perm-list">
+      <div class="perm-item"><span class="perm-icon">1️⃣</span> Tap the <strong>Share ⎙</strong> button at the bottom of Safari</div>
+      <div class="perm-item"><span class="perm-icon">2️⃣</span> Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+      <div class="perm-item"><span class="perm-icon">3️⃣</span> Tap <strong>"Add"</strong> in the top right corner</div>
+      <div class="perm-item"><span class="perm-icon">✅</span> ShortsBot appears on your iPhone home screen!</div>
+    </div>
+    <button class="gen-btn" onclick="closeSheet('installSheet');localStorage.setItem('ib','1')">Got it!</button>
+  </div>
+</div>
+
+<!-- VIDEO DETAIL SHEET -->
+<div class="sheet-overlay" id="detailSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+  <div class="status-bar"></div>
+  <div class="header">
+    <div class="header-logo">
+      <div class="logo-pill">⚡</div>
+      <div class="logo-name">Shorts<span>Bot</span></div>
+    </div>
+    <div>
+      <button class="conn-btn off" id="connBtn" onclick="handleConnectTap()">
+        <div class="cdot" id="cdot"></div>
+        <span id="connLabel">Connect</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="install-banner" id="installBanner" onclick="openSheet('installSheet')">
+        <div style="font-size:24px;flex-shrink:0">📲</div>
+        <div class="install-text">
+          <div class="install-title">Add to Home Screen</div>
+          <div class="install-desc">Tap to install ShortsBot as an app</div>
+        </div>
+        <div style="color:var(--red);font-size:18px">›</div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-title">Your <em>Dashboard</em></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-emoji">🎬</div>
+          <div class="stat-num" id="sPosted">—</div>
+          <div class="stat-lbl">Videos</div>
+          <div class="stat-sub" id="sPostedSub">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">👁️</div>
+          <div class="stat-num" id="sViews">—</div>
+          <div class="stat-lbl">Total Views</div>
+          <div class="stat-sub" id="sViewsSub">Connect channel</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">👥</div>
+          <div class="stat-num" id="sSubs">—</div>
+          <div class="stat-lbl">Subscribers</div>
+          <div class="stat-sub" id="sSubsSub">Connect channel</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">📅</div>
+          <div class="stat-num" id="sSched">0</div>
+          <div class="stat-lbl">In Queue</div>
+          <div class="stat-sub" id="sSchedSub">None queued</div>
+        </div>
+      </div>
+
+      <div class="mini-chart">
+        <div class="chart-lbl">📈 Views — Last 14 Days</div>
+        <div class="bars" id="chartBars"></div>
+      </div>
+
+      <div class="section-head" style="padding-top:4px">
+        <div class="section-title" style="font-size:17px">Video Queue</div>
+        <button class="conn-btn off" style="border-color:rgba(255,255,255,0.12);color:var(--text);background:var(--card)" onclick="goPage('create')">+ New</button>
+      </div>
+      <div id="queueList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <!-- CREATE -->
+    <div class="page" id="page-create">
+      <div class="section-head">
+        <div class="section-title">New <em>Short</em></div>
+      </div>
+      <div class="gen-form">
+        <div class="form-group">
+          <div class="form-label">📝 Topic or Hook</div>
+          <input class="form-input" id="topicInput" placeholder="e.g. 5 tips to grow on YouTube fast" autocomplete="off" autocorrect="on" spellcheck="true">
+        </div>
+        <div class="form-group">
+          <div class="form-label">🎭 Tone</div>
+          <div class="pill-row">
+            <div class="pill active" onclick="pickPill(this,'tone')">Engaging</div>
+            <div class="pill" onclick="pickPill(this,'tone')">Funny 😂</div>
+            <div class="pill" onclick="pickPill(this,'tone')">Educational</div>
+            <div class="pill" onclick="pickPill(this,'tone')">Motivational</div>
+            <div class="pill" onclick="pickPill(this,'tone')">Storytelling</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">⏱️ Length</div>
+          <select class="form-select" id="lengthSel">
+            <option value="15">15 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60" selected>60 seconds</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">📅 When to Post</div>
+          <select class="form-select" id="schedSel">
+            <option value="now">Post immediately</option>
+            <option value="1h">In 1 hour</option>
+            <option value="tomorrow-am">Tomorrow 9 AM</option>
+            <option value="tomorrow-pm">Tomorrow 6 PM</option>
+            <option value="ai">🤖 Best time (AI picks)</option>
+          </select>
+        </div>
+        <button class="gen-btn" id="genBtn" onclick="startGen()">🚀 Generate &amp; Schedule</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="section-head">
+        <div class="section-title"><em>Settings</em></div>
+      </div>
+
+      <!-- Setup card — shown when not configured -->
+      <div id="setupSection">
+        <div class="setup-card" id="setupCard">
+          <h3>⚙️ One-time Setup Required</h3>
+          <p>Paste your Google API credentials below to enable real YouTube sign-in and posting. You only do this once. Follow the setup guide for step-by-step instructions.</p>
+          <div class="input-row">
+            <div class="input-lbl">Google Client ID</div>
+            <input class="setup-input" id="clientIdInput" placeholder="xxxx.apps.googleusercontent.com" autocapitalize="none" autocorrect="off" spellcheck="false">
+          </div>
+          <div class="input-row">
+            <div class="input-lbl">Google Client Secret</div>
+            <input class="setup-input" id="clientSecretInput" placeholder="GOCSPX-xxxxxxxxxxxx" autocapitalize="none" autocorrect="off" spellcheck="false" type="password">
+          </div>
+          <div class="input-row">
+            <div class="input-lbl">Claude API Key (optional — better scripts)</div>
+            <input class="setup-input" id="claudeKeyInput" placeholder="sk-ant-xxxxxxxxxxxx" autocapitalize="none" autocorrect="off" spellcheck="false" type="password">
+          </div>
+          <button class="save-btn" onclick="saveSetup()">Save &amp; Activate</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="setting-row" id="ytAccountRow" onclick="handleConnectTap()" style="cursor:pointer">
+          <div class="setting-info">
+            <div class="setting-name">📺 YouTube Account</div>
+            <div class="setting-desc" id="ytAccountDesc">Not connected — tap to connect</div>
+          </div>
+          <div style="color:var(--muted);font-size:18px">›</div>
+        </div>
+        <div class="setting-row" onclick="openSheet('installSheet')" style="cursor:pointer">
+          <div class="setting-info">
+            <div class="setting-name">📲 Add to Home Screen</div>
+            <div class="setting-desc">Install as iPhone app</div>
+          </div>
+          <div style="color:var(--muted);font-size:18px">›</div>
+        </div>
+        <div class="setting-row" id="disconnectRow" style="display:none;cursor:pointer" onclick="disconnect()">
+          <div class="setting-info">
+            <div class="setting-name" style="color:var(--red)">Disconnect YouTube</div>
+            <div class="setting-desc">Remove channel connection</div>
+          </div>
+          <div style="color:var(--muted);font-size:18px">›</div>
+        </div>
+      </div>
+
+      <div class="section-head" style="padding-top:4px">
+        <div class="section-title" style="font-size:17px">Auto-Post</div>
+      </div>
+      <div class="settings-card">
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">🤖 Auto-generate topics</div>
+            <div class="setting-desc">AI picks trending topics and creates videos on a schedule</div>
+          </div>
+          <input type="checkbox" class="ios-toggle" id="tog1">
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">📤 Auto-post without review</div>
+            <div class="setting-desc">Videos go live automatically after being generated</div>
+          </div>
+          <input type="checkbox" class="ios-toggle" id="tog2" checked>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">#️⃣ Auto-add hashtags</div>
+            <div class="setting-desc">AI adds trending hashtags to every Short</div>
+          </div>
+          <input type="checkbox" class="ios-toggle" id="tog3" checked>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="nav-btn active" id="nav-home" onclick="goPage('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+    </div>
+    <div class="nav-btn" id="nav-create" onclick="goPage('create')">
+      <div class="nav-icon">✨</div>
+      <div class="nav-label">Create</div>
+    </div>
+    <div class="nav-btn" id="nav-settings" onclick="goPage('settings')">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">Settings</div>
+    </div>
+  </nav>
+</div>
+
+<div class="toast-zone" id="toastZone"></div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────
+let appState = { connected: false, configured: false, channel: null, videos: [] };
+let genTimer = null;
+let generatedVideo = null;
+
+// ── BOOT ─────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  buildChart();
+  checkInstallBanner();
+  await loadStatus();
+  await loadVideos();
+
+  // Handle OAuth return
+  const params = new URLSearchParams(location.search);
+  if (params.get('auth') === 'success') {
+    history.replaceState({}, '', '/');
+    showToast('✅ YouTube connected!');
+    await loadStatus();
+    await loadVideos();
+  } else if (params.get('auth') === 'error') {
+    history.replaceState({}, '', '/');
+    showToast('❌ Sign-in failed. Try again.');
+  }
+});
+
+async function loadStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    appState.configured = data.configured;
+    appState.connected = data.connected;
+    appState.channel = data.channel;
+    updateConnectUI();
+    updateSetupUI();
+  } catch(e) { console.log('Status error:', e); }
+}
+
+async function loadVideos() {
+  try {
+    const res = await fetch('/api/videos');
+    appState.videos = await res.json();
+    renderQueue();
+    updateStats();
+  } catch(e) {
+    document.getElementById('queueList').innerHTML = `<div class="empty-state"><div class="ei">🎬</div><div class="et">No videos yet</div><div class="es">Tap "Create" to generate your first Short</div></div>`;
+  }
+}
+
+// ── UI UPDATES ───────────────────────────────────────────
+function updateConnectUI() {
+  const btn = document.getElementById('connBtn');
+  const dot = document.getElementById('cdot');
+  const lbl = document.getElementById('connLabel');
+  const desc = document.getElementById('ytAccountDesc');
+  const discRow = document.getElementById('disconnectRow');
+
+  if (appState.connected && appState.channel) {
+    btn.className = 'conn-btn on';
+    dot.className = 'cdot pulse';
+    lbl.textContent = appState.channel.handle || appState.channel.title;
+    desc.textContent = `Connected as ${appState.channel.title}`;
+    discRow.style.display = 'flex';
+  } else {
+    btn.className = 'conn-btn off';
+    dot.className = 'cdot';
+    lbl.textContent = 'Connect';
+    desc.textContent = 'Not connected — tap to connect';
+    discRow.style.display = 'none';
+  }
+}
+
+function updateSetupUI() {
+  const setupCard = document.getElementById('setupCard');
+  if (appState.configured) {
+    setupCard.style.display = 'none';
+  } else {
+    setupCard.style.display = 'block';
+  }
+}
+
+function updateStats() {
+  const v = appState.videos;
+  const total = v.length;
+  const scheduled = v.filter(x => x.status === 'scheduled' || x.status === 'pending').length;
+
+  document.getElementById('sPosted').textContent = total;
+  document.getElementById('sPostedSub').textContent = total > 0 ? `${total} created` : 'None yet';
+  document.getElementById('sSched').textContent = scheduled;
+  document.getElementById('sSchedSub').textContent = scheduled > 0 ? `${scheduled} upcoming` : 'None queued';
+
+  if (appState.channel) {
+    const subs = parseInt(appState.channel.subscribers || 0);
+    const views = parseInt(appState.channel.views || 0);
+    document.getElementById('sSubs').textContent = formatNum(subs);
+    document.getElementById('sViews').textContent = formatNum(views);
+    document.getElementById('sViewsSub').textContent = 'YouTube data';
+    document.getElementById('sSubsSub').textContent = 'YouTube data';
+  }
+}
+
+function formatNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+// ── NAVIGATION ───────────────────────────────────────────
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  document.querySelector('.scroll-area').scrollTop = 0;
+}
+
+// ── SHEETS ───────────────────────────────────────────────
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.sheet-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) closeSheet(o.id); });
+});
+
+// ── AUTH ─────────────────────────────────────────────────
+function handleConnectTap() {
+  if (appState.connected) {
+    showToast('✅ Already connected to ' + (appState.channel?.title || 'YouTube'));
+    return;
+  }
+  if (!appState.configured) {
+    goPage('settings');
+    showToast('⚙️ Set up your API keys first');
+    return;
+  }
+  openSheet('connectSheet');
+}
+
+async function disconnect() {
+  try {
+    await fetch('/auth/disconnect', { method: 'POST' });
+    appState.connected = false;
+    appState.channel = null;
+    updateConnectUI();
+    showToast('Disconnected from YouTube');
+  } catch(e) { showToast('Error disconnecting'); }
+}
+
+// ── SETUP ────────────────────────────────────────────────
+async function saveSetup() {
+  const clientId = document.getElementById('clientIdInput').value.trim();
+  const clientSecret = document.getElementById('clientSecretInput').value.trim();
+  const claudeKey = document.getElementById('claudeKeyInput').value.trim();
+
+  if (!clientId || !clientSecret) {
+    showToast('⚠️ Client ID and Secret are required');
+    return;
+  }
+
+  try {
+    await fetch('/api/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, clientSecret, claudeApiKey: claudeKey })
+    });
+    appState.configured = true;
+    updateSetupUI();
+    showToast('✅ Credentials saved! Tap Connect now.');
+    document.getElementById('clientIdInput').value = '';
+    document.getElementById('clientSecretInput').value = '';
+    document.getElementById('claudeKeyInput').value = '';
+  } catch(e) { showToast('❌ Failed to save credentials'); }
+}
+
+// ── PILLS ────────────────────────────────────────────────
+function pickPill(el, group) {
+  el.closest('.pill-row').querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── GENERATE ─────────────────────────────────────────────
+async function startGen() {
+  const topic = document.getElementById('topicInput').value.trim();
+  if (!topic) {
+    showToast('✏️ Enter a topic first!');
+    document.getElementById('topicInput').focus();
+    return;
+  }
+
+  const tone = document.querySelector('#page-create .pill-row .pill.active')?.textContent?.replace(/[^\w\s]/g,'').trim() || 'Engaging';
+  const length = parseInt(document.getElementById('lengthSel').value);
+  const schedVal = document.getElementById('schedSel').value;
+
+  openSheet('genSheet');
+  resetGen();
+
+  // Animate progress while API call runs
+  animateStep(1);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, tone, length, scheduleFor: schedVal })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Generation failed');
+
+    generatedVideo = data.video;
+
+    // Animate remaining steps
+    await delay(600);
+    animateStep(2);
+    document.getElementById('scriptBox').textContent = data.video.script || data.video.hook;
+    document.getElementById('scriptBox').classList.add('show');
+
+    await delay(700);
+    animateStep(3);
+    await delay(700);
+    animateStep(4);
+    await delay(600);
+
+    // Done
+    markAllDone();
+    const subText = schedVal === 'now' ? 'Ready to post to YouTube!' : `Scheduled: ${document.getElementById('schedSel').options[document.getElementById('schedSel').selectedIndex].text}`;
+    document.getElementById('doneSub').textContent = subText;
+    document.getElementById('doneState').classList.add('show');
+
+    // Refresh queue
+    await loadVideos();
+    document.getElementById('topicInput').value = '';
+
+  } catch(e) {
+    closeSheet('genSheet');
+    showToast('❌ ' + (e.message || 'Generation failed'));
+  }
+}
+
+let currentStep = 0;
+function animateStep(n) {
+  if (currentStep > 0) {
+    const prev = document.getElementById('ps' + currentStep);
+    prev.classList.remove('active');
+    prev.classList.add('done');
+    prev.querySelector('.prog-dot').textContent = '✓';
+  }
+  currentStep = n;
+  document.getElementById('ps' + n).classList.add('active');
+}
+function markAllDone() {
+  for(let i = 1; i <= 4; i++) {
+    const el = document.getElementById('ps' + i);
+    el.classList.remove('active');
+    el.classList.add('done');
+    el.querySelector('.prog-dot').textContent = '✓';
+  }
+}
+function resetGen() {
+  currentStep = 0;
+  for(let i = 1; i <= 4; i++) {
+    const el = document.getElementById('ps' + i);
+    el.classList.remove('active','done');
+    el.querySelector('.prog-dot').textContent = i;
+  }
+  document.getElementById('scriptBox').classList.remove('show');
+  document.getElementById('scriptBox').textContent = '';
+  document.getElementById('doneState').classList.remove('show');
+}
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── QUEUE ────────────────────────────────────────────────
+function renderQueue() {
+  const list = document.getElementById('queueList');
+  if (!appState.videos.length) {
+    list.innerHTML = `<div class="empty-state"><div class="ei">🎬</div><div class="et">No videos yet</div><div class="es">Tap "Create" to generate your first Short with AI</div></div>`;
+    return;
+  }
+  list.innerHTML = appState.videos.map(v => `
+    <div class="queue-card" onclick="showDetail('${v.id}')">
+      <div class="qthumb">${v.emoji || '🎬'}</div>
+      <div class="q-info">
+        <div class="q-title">${escHtml(v.title)}</div>
+        <div class="q-meta">${escHtml(v.tone || 'Engaging')} · ${timeLabel(v)}</div>
+        <span class="badge badge-${v.status}">${statusLabel(v.status)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function statusLabel(s) {
+  return { live:'● Live', pending:'⏳ Scheduled', draft:'✏️ Draft', scheduled:'📅 Queued', error:'❌ Error' }[s] || s;
+}
+function timeLabel(v) {
+  if (v.scheduledFor === 'now') return 'Post now';
+  if (v.scheduledFor === '1h') return 'In 1 hour';
+  if (v.scheduledFor === 'tomorrow-am') return 'Tomorrow 9 AM';
+  if (v.scheduledFor === 'tomorrow-pm') return 'Tomorrow 6 PM';
+  if (v.scheduledFor === 'ai') return 'AI-timed';
+  return new Date(v.createdAt).toLocaleDateString();
+}
+
+function showDetail(id) {
+  const v = appState.videos.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="sheet-title" style="margin-bottom:8px">${escHtml(v.title)}</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="badge badge-${v.status}">${statusLabel(v.status)}</span>
+      <span class="badge badge-draft">${v.tone}</span>
+      <span class="badge badge-draft">${v.length}s</span>
+    </div>
+    <div class="form-label" style="margin-bottom:6px">Script</div>
+    <div class="script-box show" style="margin-bottom:16px;max-height:200px">${escHtml(v.script || v.hook || 'No script')}</div>
+    <div class="form-label" style="margin-bottom:6px">Hashtags</div>
+    <div style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:20px">${escHtml(v.hashtags || '')}</div>
+    <button class="gen-btn" style="margin-bottom:10px" onclick="deleteVideo('${v.id}')">🗑️ Delete Video</button>
+    <button class="gen-btn" style="background:linear-gradient(135deg,#1a1a2e,#16213e);box-shadow:none" onclick="closeSheet('detailSheet')">Close</button>
+  `;
+  openSheet('detailSheet');
+}
+
+async function deleteVideo(id) {
+  try {
+    await fetch('/api/videos/' + id, { method: 'DELETE' });
+    appState.videos = appState.videos.filter(v => v.id !== id);
+    renderQueue();
+    updateStats();
+    closeSheet('detailSheet');
+    showToast('🗑️ Video deleted');
+  } catch(e) { showToast('Error deleting video'); }
+}
+
+// ── CHART ────────────────────────────────────────────────
+function buildChart() {
+  const bars = document.getElementById('chartBars');
+  bars.innerHTML = '';
+  const data = Array.from({length:14}, () => Math.floor(Math.random()*75)+10);
+  const max = Math.max(...data);
+  data.forEach((v,i) => {
+    const b = document.createElement('div');
+    b.className = 'bar' + (i===13?' today':'');
+    b.style.height = ((v/max)*48)+'px';
+    bars.appendChild(b);
+  });
+}
+
+// ── INSTALL BANNER ────────────────────────────────────────
+function checkInstallBanner() {
+  const banner = document.getElementById('installBanner');
+  if (window.navigator.standalone || localStorage.getItem('ib')) {
+    banner.classList.add('hidden');
+  }
+}
+
+// ── TOASTS ───────────────────────────────────────────────
+function showToast(msg) {
+  const zone = document.getElementById('toastZone');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  zone.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
