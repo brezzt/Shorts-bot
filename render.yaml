@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: shortsbot
+    env: node
+    buildCommand: echo "No build needed"
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: BASE_URL
+        generateValue: false

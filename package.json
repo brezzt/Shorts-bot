@@ -1,0 +1,14 @@
+{
+  "name": "shortsbot",
+  "version": "2.0.0",
+  "description": "AI YouTube Shorts automation bot — fully working",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {}
+}
